@@ -50,7 +50,7 @@ int main(int argc, char** argv)
 	for (int i = 1; i < argc; i += 2)
 	{
 		int count = 0;
-		std::pair<int,int> ind=find(std::atoi(argv[i]), std::atoi(argv[i + 1]));
+		auto ind=find(std::atoi(argv[i]), std::atoi(argv[i + 1]));
 		for (int i = ind.first; i <= ind.second; ++i)
 			count += v[Data[i]];
 		std::cout << count << std::endl;
