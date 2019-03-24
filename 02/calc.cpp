@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <stdexcept>
+#include<memory>
 
 enum class Operation
 {
@@ -16,8 +17,8 @@ class Expression
 	std::int64_t value = 0;
 	std::int64_t result;
 	Operation op = Operation::NOP;
-	Expression* left;
-	Expression* right;
+	std::unique_ptr<Expression> left;
+	std::unique_ptr<Expression> right;
 	std::string SkipSpaces(const std::string& exp)
 	{
 		std::string out;
@@ -54,7 +55,7 @@ class Expression
 		}
 		return out;
 	}
-	std::int64_t Calculate(Expression* exp)
+	std::int64_t Calculate(std::unique_ptr<Expression>& exp)
 	{
 		if (exp->op == Operation::NOP)
 			return exp->value;
@@ -81,9 +82,9 @@ class Expression
 
 		return exp->value;
 	}
-	Expression* ParseAddSub(std::string &str)
+	std::unique_ptr<Expression> ParseAddSub(std::string &str)
 	{
-		Expression* _left = ParseMulDiv(str);
+		std::unique_ptr<Expression> _left = ParseMulDiv(str);
 		while (true)
 		{
 			Operation op = Operation::NOP;
@@ -99,19 +100,19 @@ class Expression
 				return _left;
 			}
 			str = remainingStr;
-			Expression* _right = ParseMulDiv(str);
-			Expression* expr=new Expression;
-			expr->left = _left;
-			expr->right = _right;
+			std::unique_ptr<Expression> _right = ParseMulDiv(str);
+			std::unique_ptr<Expression> expr(new Expression);
+			expr->left = std::move(_left);
+			expr->right = std::move(_right);
 			expr->op = op;
-			_left = expr;
+			_left = std::move(expr);
 		}
 
 		return _left;
 	}
-	Expression* ParseMulDiv(std::string &str)
+	std::unique_ptr<Expression> ParseMulDiv(std::string &str)
 	{
-		Expression* _left = ParseAtom(str);
+		std::unique_ptr<Expression> _left = ParseAtom(str);
 		while (true)
 		{
 			Operation op = Operation::NOP;
@@ -127,19 +128,19 @@ class Expression
 				return _left;
 			}
 			str = remainingStr;
-			Expression* _right = ParseMulDiv(str);
-			Expression* expr= new Expression;
-			expr->left = _left;
-			expr->right = _right;
+			std::unique_ptr<Expression> _right = ParseMulDiv(str);
+			std::unique_ptr<Expression> expr(new Expression);
+			expr->left = std::move(_left);
+			expr->right = std::move(_right);
 			expr->op = op;
-			_left = expr;
+			_left = std::move(expr);
 		}
 
 		return _left;
 	}
-	Expression* ParseAtom(std::string &str)
+	std::unique_ptr<Expression> ParseAtom(std::string &str)
 	{
-		Expression* expr = new Expression;
+		std::unique_ptr<Expression> expr ( new Expression);
 		if (!ParseNum(str, expr->value))
 			throw std::runtime_error("");
 		return expr;
@@ -197,11 +198,11 @@ class Expression
 		return succeed;
 	}
 public:
-	Expression(){}
+	Expression() {}
 	Expression(const std::string& str)
 	{
 		std::string exp = deletedoublemines(SkipSpaces(str));
-		Expression* rexp=ParseAddSub(exp);
+		std::unique_ptr<Expression> rexp=ParseAddSub(exp);
 		if (!exp.empty()) {
 			throw std::runtime_error("");
 		}
@@ -209,6 +210,9 @@ public:
 	}
 	std::int64_t show_result() {
 		return result;
+	}
+	~Expression() {
+
 	}
 };
 
