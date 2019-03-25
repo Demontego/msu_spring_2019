@@ -153,10 +153,8 @@ class Expression
 		if (remainingStr[0] == '-')
 		{
 			remainingStr = remainingStr.substr(1);
-			SkipSpaces(remainingStr);
 			isnegative = true;
 		}
-		SkipSpaces(remainingStr);
 		if (remainingStr.size() > 0 && isdigit(remainingStr[0]))
 		{
 			while (numSize < remainingStr.size() && isdigit(remainingStr[numSize]))
