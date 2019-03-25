@@ -15,7 +15,7 @@ enum class Operation
 class Expression
 {
 	std::int64_t value = 0;
-	std::int64_t result;
+	std::int64_t result = 0;
 	Operation op = Operation::NOP;
 	std::unique_ptr<Expression> left;
 	std::unique_ptr<Expression> right;
