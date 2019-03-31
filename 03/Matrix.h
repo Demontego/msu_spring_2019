@@ -63,11 +63,11 @@ public:
 
 	bool operator!=(Matrix& R) const { return !(*this == R); }
 
-	Matrix* operator*=(int factor)
+	Matrix& operator*=(int factor)
 	{
 		for (int i = 0; i < _rows; ++i)
 			for (int j = 0; j < _cols; ++j)
 				_m[i][j] *= factor;
-		return this;
+		return *this;
 	}
 };
