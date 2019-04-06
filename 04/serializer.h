@@ -29,7 +29,7 @@ public:
 	}
 
 private:
-	Error process(bool val)
+	Error process(bool& val)
 	{
 		if(val)
 			out_ << "true" << Separator;
@@ -37,14 +37,14 @@ private:
 			out_ << "false" << Separator;
 		return Error::NoError;
 	}
-	Error process(uint64_t val)
+	Error process(uint64_t& val)
 	{
 		out_ << val << Separator;
 		return Error::NoError;
 	}
 
 	template <class T, class... Args>
-	Error process(T val, Args... args)
+	Error process(T&& val, Args&&... args)
 	{
 		process(val);
 		process(std::forward<Args>(args)...);
@@ -106,12 +106,14 @@ private:
 		return Error::NoError;
 	}
 
+
 	template <class T, class... Args>
-	Error process(T& val, Args& ... args)
+	Error process(T&& val, Args&& ... args)
 	{
 		auto er=process(val);
 		if(er==Error::NoError)
-			return process(args...);
+			return process(std::forward<Args>(args)...);
 		return Error::CorruptedArchive;
 	}
 };
+
