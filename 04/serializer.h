@@ -9,7 +9,7 @@ enum class Error
 class Serializer
 {
 	static constexpr char Separator = ' ';
-	std::ostream &out_;
+	std::ostream& out_;
 public:
 	explicit Serializer(std::ostream& out)
 		: out_(out)
@@ -23,28 +23,28 @@ public:
 	}
 
 	template <class... Args>
-	Error operator()(Args... args)
+	Error operator()(Args&&... args)
 	{
-		return process(args...);
+		return process(std::forward<Args>(args)...);
 	}
 
 private:
-	Error process(bool& val)
+	void process(bool& val)
 	{
-		if(val)
+		if (val)
 			out_ << "true" << Separator;
 		else
 			out_ << "false" << Separator;
-		return Error::NoError;
+		//return Error::NoError;
 	}
-	Error process(uint64_t& val)
+	void process(uint64_t& val)
 	{
 		out_ << val << Separator;
-		return Error::NoError;
+		//return Error::NoError;
 	}
 
 	template <class T, class... Args>
-	Error process(T&& val, Args&&... args)
+	Error process(T&& val, Args&& ... args)
 	{
 		process(val);
 		process(std::forward<Args>(args)...);
@@ -68,9 +68,9 @@ public:
 	}
 
 	template <class... Args>
-	Error operator()(Args&... args)
+	Error operator()(Args&& ... args)
 	{
-		return process(args...);
+		return process(std::forward<Args>(args)...);
 	}
 
 private:
@@ -93,12 +93,12 @@ private:
 		std::string text;
 		in_ >> text;
 
-		if (text[0]=='-')
+		if (text[0] == '-')
 			return Error::CorruptedArchive;
 		try {
 			val = stoul(text);
 		}
-		catch (const invalid_argument& error)
+		catch (const invalid_argument & error)
 		{
 			return Error::CorruptedArchive;
 		}
@@ -108,10 +108,9 @@ private:
 
 
 	template <class T, class... Args>
-	Error process(T&& val, Args&& ... args)
+	Error process(T && val, Args && ... args)
 	{
-		auto er=process(val);
-		if(er==Error::NoError)
+		if (process(val) == Error::NoError)
 			return process(std::forward<Args>(args)...);
 		return Error::CorruptedArchive;
 	}
