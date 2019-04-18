@@ -37,7 +37,7 @@ private:
 			out_ << "false" << Separator;
 		//return Error::NoError;
 	}
-	void process(uint64_t& val)
+	void process(uint64_t val)
 	{
 		out_ << val << Separator;
 		//return Error::NoError;
@@ -46,7 +46,7 @@ private:
 	template <class T, class... Args>
 	Error process(T&& val, Args&& ... args)
 	{
-		process(val);
+		process(std::forward<T>(val));
 		process(std::forward<Args>(args)...);
 		return Error::NoError;
 	}
