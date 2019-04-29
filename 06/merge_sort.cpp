@@ -118,7 +118,7 @@ bool Simple_Merging_Sort(char* name)
 	FILE* f1 = fopen(name, "rb");
 	if (feof(f1))
 		return false;
-	uint64_t  N = 100000, K = 0;
+	uint64_t  N = 100, K = 0;
 	ofstream f2("data.txt");
 	uint64_t* buf = new uint64_t[N];
 	while (!feof(f1)) {
