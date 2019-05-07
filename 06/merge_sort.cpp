@@ -11,7 +11,7 @@ std::mutex mute;
 condition_variable ready;
 bool data_ready = true, complete=false;
 
-void separation(char* name, uint64_t kol)
+void separation(const char* name, uint64_t kol)
 {
 	unique_lock<std::mutex> lock(mute);
 	uint64_t tmp, k=1;
@@ -22,9 +22,9 @@ void separation(char* name, uint64_t kol)
 			ready.wait(lock);
 		if (complete)
 			break;
-		f.open(name);
-		f1.open("smsort_1");
-		f2.open("smsort_2");
+		f.open(name,ios::binary);
+		f1.open("smsort_1",ios::binary);
+		f2.open("smsort_2",ios::binary);
 		if (!f.eof()) f >> tmp;
 		while (!f.eof()) {
 			for (uint64_t i = 0; i < k && !f.eof(); ++i) {
@@ -49,7 +49,7 @@ void separation(char* name, uint64_t kol)
 }
 
 
-void merge(char* name, uint64_t kol) 
+void merge(const char* name, uint64_t kol) 
 {
 	unique_lock<std::mutex> lock(mute);
 	uint64_t a1, a2, k = 1;
@@ -58,9 +58,9 @@ void merge(char* name, uint64_t kol)
 	while (k < kol) {
 		while (data_ready)
 			ready.wait(lock);
-		f.open(name);
-		f1.open("smsort_1");
-		f2.open("smsort_2");
+		f.open(name, ios::binary);
+		f1.open("smsort_1", ios::binary);
+		f2.open("smsort_2", ios::binary);
 		if (!f1.eof()) f1 >> a1; else break;
 		if (!f2.eof()) f2 >> a2; else break;
 		while (!f1.eof() && !f2.eof()) {
@@ -113,13 +113,13 @@ void merge(char* name, uint64_t kol)
 	ready.notify_one();
 }
 
-bool Simple_Merging_Sort(char* name)
+bool camelCase(const char* name)
 {
 	FILE* f1 = fopen(name, "rb");
 	if (feof(f1))
 		return false;
-	uint64_t  N = 100, K = 0;
-	ofstream f2("data.txt");
+	uint64_t  N = 100000, K = 0;
+	ofstream f2("data_s.dat", ios::binary);
 	uint64_t* buf = new uint64_t[N];
 	while (!feof(f1)) {
 		uint64_t end = fread(reinterpret_cast<char*>(buf), sizeof(uint64_t), N, f1);
@@ -131,8 +131,8 @@ bool Simple_Merging_Sort(char* name)
 	delete[] buf;
 	fclose(f1);
 	f2.close();
-	std::thread t1(separation,(char*)"data.txt", K);
-	std::thread t2(merge,(char*)"data.txt", K);
+	std::thread t1(separation, "data_s.dat", K);
+	std::thread t2(merge, "data_s.dat", K);
 	t1.join();
 	t2.join();
 	return true;
@@ -140,7 +140,7 @@ bool Simple_Merging_Sort(char* name)
 
 int main()
 {
-	cout << Simple_Merging_Sort((char*)"data.dat") << endl;
+	cout << camelCase("data.dat") << endl;
 	return 0;
 }
 
