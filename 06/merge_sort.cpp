@@ -7,7 +7,7 @@
 
 #pragma warning (disable : 4996)
 
-uint64_t  N = 100000;
+uint64_t  N = 1000000;
 using namespace std;
 
 class Timer
@@ -35,31 +35,31 @@ private:
 
 std::mutex mute;
 condition_variable ready;
-bool data_ready = true, complete=false;
+bool data_ready = true, complete = false;
 
 void separation(const char* name, uint64_t kol)
 {
 	unique_lock<std::mutex> lock(mute);
-	uint64_t tmp, k=N;
+	uint64_t tmp, k = N;
 	ifstream f;
 	ofstream f1, f2;
 	while (k < kol) {
-		while(!data_ready)
+		while (!data_ready)
 			ready.wait(lock);
 		if (complete)
 			break;
-		f.open(name,ios::binary);
-		f1.open("smsort_1",ios::binary);
-		f2.open("smsort_2",ios::binary);
-		if (!f.eof()) f >> tmp;
+		f.open(name, ios::binary);
+		f1.open("smsort_1", ios::binary);
+		f2.open("smsort_2", ios::binary);
+		if (!f.eof())  f.read(reinterpret_cast<char*>(&tmp), sizeof(uint64_t));
 		while (!f.eof()) {
 			for (uint64_t i = 0; i < k && !f.eof(); ++i) {
-				f1 << tmp << ' ';
-				f >> tmp;
+				f1.write(reinterpret_cast<char*>(&tmp), sizeof(uint64_t));
+				f.read(reinterpret_cast<char*>(&tmp), sizeof(uint64_t));
 			}
 			for (uint64_t j = 0; j < k && !f.eof(); ++j) {
-				f2 << tmp << ' ';
-				f >> tmp;
+				f2.write(reinterpret_cast<char*>(&tmp), sizeof(uint64_t));
+				f.read(reinterpret_cast<char*>(&tmp), sizeof(uint64_t));
 			}
 		}
 		f.close();
@@ -75,7 +75,7 @@ void separation(const char* name, uint64_t kol)
 }
 
 
-void merge(const char* name, uint64_t kol) 
+void merge(const char* name, uint64_t kol)
 {
 	unique_lock<std::mutex> lock(mute);
 	uint64_t a1, a2, k = N;
@@ -87,41 +87,41 @@ void merge(const char* name, uint64_t kol)
 		f.open(name, ios::binary);
 		f1.open("smsort_1", ios::binary);
 		f2.open("smsort_2", ios::binary);
-		if (!f1.eof()) f1 >> a1; else break;
-		if (!f2.eof()) f2 >> a2; else break;
+		if (!f1.eof()) f1.read(reinterpret_cast<char*>(&a1), sizeof(uint64_t)); else break;
+		if (!f2.eof()) f2.read(reinterpret_cast<char*>(&a2), sizeof(uint64_t)); else break;
 		while (!f1.eof() && !f2.eof()) {
 			uint64_t i = 0;
 			uint64_t j = 0;
 			while (i < k && j < k && !f1.eof() && !f2.eof()) {
 				if (a1 < a2) {
-					f << a1 << ' ';
-					f1 >> a1;
+					f.write(reinterpret_cast<char*>(&a1), sizeof(uint64_t));
+					f1.read(reinterpret_cast<char*>(&a1), sizeof(uint64_t));
 					i++;
 				}
 				else {
-					f << a2 << ' ';
-					f2 >> a2;
+					f.write(reinterpret_cast<char*>(&a2), sizeof(uint64_t));
+					f2.read(reinterpret_cast<char*>(&a2), sizeof(uint64_t));
 					j++;
 				}
 			}
 			while (i < k && !f1.eof()) {
-				f << a1 << ' ';
-				f1 >> a1;
+				f.write(reinterpret_cast<char*>(&a1), sizeof(uint64_t));
+				f1.read(reinterpret_cast<char*>(&a1), sizeof(uint64_t));
 				i++;
 			}
 			while (j < k && !f2.eof()) {
-				f << a2 << ' ';
-				f2 >> a2;
+				f.write(reinterpret_cast<char*>(&a2), sizeof(uint64_t));
+				f2.read(reinterpret_cast<char*>(&a2), sizeof(uint64_t));
 				j++;
 			}
 		}
 		while (!f1.eof()) {
-			f << a1 << ' ';
-			f1 >> a1;
+			f.write(reinterpret_cast<char*>(&a1), sizeof(uint64_t));
+			f1.read(reinterpret_cast<char*>(&a1), sizeof(uint64_t));
 		}
 		while (!f2.eof()) {
-			f << a2 << ' ';
-			f2 >> a2;
+			f.write(reinterpret_cast<char*>(&a2), sizeof(uint64_t));
+			f2.read(reinterpret_cast<char*>(&a2), sizeof(uint64_t));
 		}
 		f2.close();
 		f1.close();
@@ -141,24 +141,23 @@ void merge(const char* name, uint64_t kol)
 
 bool camelCase(const char* name)
 {
-	FILE* f1 = fopen(name, "rb");
-	if (feof(f1))
+	ifstream f1(name, ios::binary);
+	if (f1.eof())
 		return false;
 	uint64_t  K = 0;
-	ofstream f2("data_s.dat", ios::binary);
+	ofstream f2("data_s2.dat", ios::binary);
 	uint64_t* buf = new uint64_t[N];
-	while (!feof(f1)) {
-		uint64_t end = fread(reinterpret_cast<char*>(buf), sizeof(uint64_t), N, f1);
-		K += end;
-		sort(buf, buf + end);
-		for (auto in = buf; in != buf + end; in++)
-			f2 << *in << ' ';
+	while (!f1.eof()) {
+		f1.read(reinterpret_cast<char*>(buf), sizeof(uint64_t)*N);
+		K += f1.gcount()/ sizeof(uint64_t);
+		sort(buf, buf + f1.gcount()/ sizeof(uint64_t));
+		f2.write(reinterpret_cast<char*>(buf), f1.gcount());
 	}
 	delete[] buf;
-	fclose(f1);
+	f1.close();
 	f2.close();
-	std::thread t1(separation, "data_s.dat", K);
-	std::thread t2(merge, "data_s.dat", K);
+	std::thread t1(separation, "data_s2.dat", K);
+	std::thread t2(merge, "data_s2.dat", K);
 	t1.join();
 	t2.join();
 	return true;
@@ -168,9 +167,8 @@ int main()
 {
 	{
 		Timer t;
-		cout << camelCase("data.dat") << endl;
+		cout << camelCase("my_data.dat") << endl;
 	}
 	system("pause");
 	return 0;
 }
-
