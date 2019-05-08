@@ -3,9 +3,35 @@
 #include <algorithm>  
 #include <thread>
 #include <mutex>
+#include <chrono>
 
 #pragma warning (disable : 4996)
+
+uint64_t  N = 100000;
 using namespace std;
+
+class Timer
+{
+	using clock_t = std::chrono::high_resolution_clock;
+	using microseconds = std::chrono::microseconds;
+public:
+	Timer()
+		: start_(clock_t::now())
+	{
+	}
+
+	~Timer()
+	{
+		const auto finish = clock_t::now();
+		const auto us =
+			std::chrono::duration_cast<microseconds>
+			(finish - start_).count();
+		std::cout << us << " us" << std::endl;
+	}
+
+private:
+	const clock_t::time_point start_;
+};
 
 std::mutex mute;
 condition_variable ready;
@@ -14,7 +40,7 @@ bool data_ready = true, complete=false;
 void separation(const char* name, uint64_t kol)
 {
 	unique_lock<std::mutex> lock(mute);
-	uint64_t tmp, k=1;
+	uint64_t tmp, k=N;
 	ifstream f;
 	ofstream f1, f2;
 	while (k < kol) {
@@ -52,7 +78,7 @@ void separation(const char* name, uint64_t kol)
 void merge(const char* name, uint64_t kol) 
 {
 	unique_lock<std::mutex> lock(mute);
-	uint64_t a1, a2, k = 1;
+	uint64_t a1, a2, k = N;
 	ifstream f1, f2;
 	ofstream f;
 	while (k < kol) {
@@ -63,6 +89,8 @@ void merge(const char* name, uint64_t kol)
 		f2.open("smsort_2", ios::binary);
 		if (!f1.eof()) f1 >> a1; else break;
 		if (!f2.eof()) f2 >> a2; else break;
+		data_ready = true;
+		ready.notify_one();
 		while (!f1.eof() && !f2.eof()) {
 			uint64_t i = 0;
 			uint64_t j = 0;
@@ -101,8 +129,6 @@ void merge(const char* name, uint64_t kol)
 		f1.close();
 		f.close();
 		k *= 2;
-		data_ready = true;
-		ready.notify_one();
 	}
 	f2.close();
 	f1.close();
@@ -118,7 +144,7 @@ bool camelCase(const char* name)
 	FILE* f1 = fopen(name, "rb");
 	if (feof(f1))
 		return false;
-	uint64_t  N = 100000, K = 0;
+	uint64_t  K = 0;
 	ofstream f2("data_s.dat", ios::binary);
 	uint64_t* buf = new uint64_t[N];
 	while (!feof(f1)) {
@@ -140,7 +166,11 @@ bool camelCase(const char* name)
 
 int main()
 {
-	cout << camelCase("data.dat") << endl;
+	{
+		Timer t;
+		cout << camelCase("data.dat") << endl;
+	}
+	system("pause");
 	return 0;
 }
 
