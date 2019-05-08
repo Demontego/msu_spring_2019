@@ -89,8 +89,6 @@ void merge(const char* name, uint64_t kol)
 		f2.open("smsort_2", ios::binary);
 		if (!f1.eof()) f1 >> a1; else break;
 		if (!f2.eof()) f2 >> a2; else break;
-		data_ready = true;
-		ready.notify_one();
 		while (!f1.eof() && !f2.eof()) {
 			uint64_t i = 0;
 			uint64_t j = 0;
@@ -129,6 +127,8 @@ void merge(const char* name, uint64_t kol)
 		f1.close();
 		f.close();
 		k *= 2;
+		data_ready = true;
+		ready.notify_one();
 	}
 	f2.close();
 	f1.close();
