@@ -139,7 +139,7 @@ void merge(const char* name, uint64_t kol)
 	ready.notify_one();
 }
 
-bool camelCase(const char* name)
+bool simpleMergeSort(const char* name)
 {
 	ifstream f1(name, ios::binary);
 	if (f1.eof())
