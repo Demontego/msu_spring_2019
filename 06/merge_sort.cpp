@@ -35,7 +35,7 @@ private:
 
 std::mutex mute;
 condition_variable ready;
-bool data_ready = true, complete = false;
+bool dataReady = true, complete = false;
 
 void separation(const char* name, uint64_t kol)
 {
@@ -49,8 +49,8 @@ void separation(const char* name, uint64_t kol)
 		if (complete)
 			break;
 		f.open(name, ios::binary);
-		f1.open("smsort_1", ios::binary);
-		f2.open("smsort_2", ios::binary);
+		f1.open("smsort1", ios::binary);
+		f2.open("smsort2", ios::binary);
 		if (!f.eof())  f.read(reinterpret_cast<char*>(&tmp), sizeof(uint64_t));
 		while (!f.eof()) {
 			for (uint64_t i = 0; i < k && !f.eof(); ++i) {
@@ -127,7 +127,7 @@ void merge(const char* name, uint64_t kol)
 		f1.close();
 		f.close();
 		k *= 2;
-		data_ready = true;
+		dataReady = true;
 		ready.notify_one();
 	}
 	f2.close();
@@ -167,8 +167,7 @@ int main()
 {
 	{
 		Timer t;
-		cout << camelCase("my_data.dat") << endl;
+		cout << simpleMergeSort("my_data.dat") << endl;
 	}
-	system("pause");
 	return 0;
 }
