@@ -44,7 +44,7 @@ void separation(const char* name, uint64_t kol)
 	ifstream f;
 	ofstream f1, f2;
 	while (k < kol) {
-		while (!data_ready)
+		while (!dataReady)
 			ready.wait(lock);
 		if (complete)
 			break;
@@ -65,7 +65,7 @@ void separation(const char* name, uint64_t kol)
 		f.close();
 		f1.close();
 		f2.close();
-		data_ready = false;
+		dataReady = false;
 		k *= 2;
 		ready.notify_one();
 	}
@@ -82,7 +82,7 @@ void merge(const char* name, uint64_t kol)
 	ifstream f1, f2;
 	ofstream f;
 	while (k < kol) {
-		while (data_ready)
+		while (dataReady)
 			ready.wait(lock);
 		f.open(name, ios::binary);
 		f1.open("smsort_1", ios::binary);
